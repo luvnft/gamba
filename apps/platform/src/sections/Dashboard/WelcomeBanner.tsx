@@ -100,20 +100,20 @@ export function WelcomeBanner() {
   return (
     <Welcome>
       <div>
-        <h1>Welcome to Gamba v2 👋</h1>
+        <h1>Welcome to MetaVegas 🎰</h1>
         <p>
           A fair, simple and decentralized casino on Solana.
         </p>
       </div>
       <Buttons>
         <button onClick={() => window.open('https://v2.gamba.so/', '_blank')}>
-          🚀 Add Liqudity
+          🏊🏻‍♂️ Add Liqudity
         </button>
-        <button onClick={() => window.open('https://github.com/gamba-labs/gamba', '_blank')}>
-          👨‍💻 Build your own
+        <button onClick={() => window.open('https://linktr.ee/metavegas888', '_blank')}>
+          🏁 Start
         </button>
-        <button onClick={() => window.open('https://discord.gg/HSTtFFwR', '_blank')}>
-          💬 Discord
+        <button onClick={() => window.open('https://www.spatial.io/s/MetaVegas8-8-8-65a54d18e40487cbb55577ec?share=7289349129739015946', '_blank')}>
+          ✨ MetaVerse
         </button>
       </Buttons>
     </Welcome>
