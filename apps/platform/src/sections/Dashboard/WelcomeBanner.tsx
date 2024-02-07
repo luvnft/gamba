@@ -100,20 +100,20 @@ export function WelcomeBanner() {
   return (
     <Welcome>
       <div>
-        <h1>Welcome to MetaVegas 🎰</h1>
+        <h1>Welcome to MetaVegas</h1>
         <p>
         A fair, simple and decentralized social charity casino on Solana. Create a <a href='https://phantom.app/'><b>Phantom</b></a> wallet account. Then buy <a href='https://crypto.link.com?ref=lb&destination_currency=sol&destination_network=solana'><b>$SOL</b></a> or <a href='https://crypto.link.com?ref=lb&destination_currency=usdc&destination_network=solana'><b>$USDC</b></a> to start.
         </p>
       </div>
       <Buttons>
-        <button onClick={() => window.open('https://v2.gamba.so/', '_blank')}>
-          🏊🏻‍♂️ Add Liqudity
+        <button onClick={() => window.open('https://soleye.luvnft.com', '_blank')}>
+         🧿 $SOLEYE
         </button>
         <button onClick={() => window.open('https://linktr.ee/metavegas888', '_blank')}>
           🏁 Start
         </button>
         <button onClick={() => window.open('https://www.spatial.io/s/MetaVegas8-8-8-65a54d18e40487cbb55577ec?share=7289349129739015946', '_blank')}>
-          ✨ MetaVerse
+          ✨ Events
         </button>
       </Buttons>
     </Welcome>
