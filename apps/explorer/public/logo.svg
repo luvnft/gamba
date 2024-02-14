@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg width="100%" height="100%" viewBox="0 0 120 44" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-    <g transform="matrix(1,0,0,1,-12.5908,10.4935)">
-        <text x="12.34px" y="19.924px" style="font-family:'HORUSRegular', 'HORUS';font-size:24px;fill:white;">ME<tspan x="40.828px 51.604px 63.964px 77.668px 89.02px 106.756px 120.964px " y="19.924px 19.924px 19.924px 19.924px 19.924px 19.924px 19.924px ">TAVEGAS</tspan></text>
+    <g transform="matrix(0.859878,0,0,0.859878,-6.87104,15.2827)">
+        <text x="8.769px" y="14.692px" style="font-family:'ArchivoBlack-Regular', 'Archivo Black', sans-serif;font-size:20px;fill:white;">MET<tspan x="55.175px 69.628px 85.185px " y="14.692px 14.692px 14.692px ">AVE</tspan>GAS</text>
     </g>
 </svg>
