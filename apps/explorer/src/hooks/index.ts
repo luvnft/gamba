@@ -3,10 +3,15 @@ import { PublicKey } from "@solana/web3.js"
 import { decodeAta, getPoolAddress, getUserBonusAtaForPool, getUserLpAtaForPool, getUserUnderlyingAta, isNativeMint } from "gamba-core-v2"
 import { useAccount, useWalletAddress } from "gamba-react-v2"
 import React from "react"
-
-import { ParsedTokenAccount, useTokenAccountsByOwner } from "@/hooks"
-
+import { ParsedTokenAccount, useTokenAccountsByOwner } from "./useTokens"
+import { PlatformMeta, getPlatformMeta } from "@/platforms"
+import { useBonfidaName } from "./useBonfidaName"
+import { minidenticon } from "minidenticons"
+import { truncateString } from "@/components/AccountItem"
 export * from "./useToast"
+export * from "./useTokenMeta"
+export * from "./useBonfidaName"
+export * from "./useMediaQuery"
 export * from "./useTokens"
 
 export function useNativeBalance() {
@@ -16,12 +21,12 @@ export function useNativeBalance() {
   return nativeBalance
 }
 
-export function useBalance(mint: PublicKey) {
+export function useBalance(mint: PublicKey, authority?: PublicKey) {
   const user = useWalletAddress()
 
   const ata = getUserUnderlyingAta(user, mint)
-  const bonusAta = getUserBonusAtaForPool(user, getPoolAddress(mint))
-  const lpAta = getUserLpAtaForPool(user, getPoolAddress(mint))
+  const bonusAta = getUserBonusAtaForPool(user, getPoolAddress(mint, authority))
+  const lpAta = getUserLpAtaForPool(user, getPoolAddress(mint, authority))
 
   const tokenAccount = useAccount(ata, decodeAta)
   const bonusAccount = useAccount(bonusAta, decodeAta)
@@ -38,6 +43,7 @@ export function useBalance(mint: PublicKey) {
     lpBalance,
   }
 }
+
 // Modified to always include SOL even when the user doesn't have wSOL
 export function useTokenList() {
   const publicKey = useWalletAddress()
@@ -58,41 +64,14 @@ export function useTokenList() {
   )
 }
 
+export function usePlatformMeta(address: PublicKey | string): PlatformMeta {
+  const meta = getPlatformMeta(address)
+  const domainName = useBonfidaName(address)
+  const identicon = React.useMemo(() => 'data:image/svg+xml;utf8,' + encodeURIComponent(minidenticon(address.toString())), [address.toString()])
 
-export async function fetchJupiterTokenList() {
-  const response = await fetch('https://cache.jup.ag/tokens')
-  const tokenList = await response.json()
-
-  return tokenList.map(token => ({
-    mint: new PublicKey(token.address),
-    name: token.name,
-    symbol: token.symbol,
-    image: token.logoURI,
-    decimals: token.decimals,
-  }))
+  return meta ?? {
+    address: address.toString(),
+    name: domainName ?? truncateString(address.toString()),
+    image: identicon,
+  }
 }
-
-export const formatTokenAmount = (amount, decimals, symbol = "") => {
-  // Ensure amount is a BigInt
-  const bigIntAmount = BigInt(amount);
-
-  // Calculate the divisor as a BigInt
-  const divisor = BigInt(10 ** decimals);
-
-  // Divide and get remainder as BigInt
-  const formattedAmount = bigIntAmount / divisor;
-  const fractionalPart = bigIntAmount % divisor;
-
-  // Combine integer and fractional parts for display
-  const displayAmount = Number(formattedAmount) + Number(fractionalPart) / Number(divisor);
-
-  // Format with commas and decimal places
-  const formattedWithCommas = new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(displayAmount);
-
-  return symbol ? `${formattedWithCommas} ${symbol}` : formattedWithCommas;
-}
-
-

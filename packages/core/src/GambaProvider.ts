@@ -1,10 +1,11 @@
 import * as anchor from '@coral-xyz/anchor'
-import { getAssociatedTokenAddressSync } from '@solana/spl-token'
-import { AddressLookupTableProgram, ConfirmOptions, Connection, PublicKey } from '@solana/web3.js'
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from '@solana/spl-token'
+import { AddressLookupTableProgram, ConfirmOptions, Connection, Keypair, PublicKey, SYSVAR_RENT_PUBKEY, SystemProgram } from '@solana/web3.js'
 import { PROGRAM_ID } from './constants'
 import { Gamba as GambaIdl, IDL } from './idl'
 import { GambaProviderWallet } from './types'
 import { basisPoints, getGambaStateAddress, getGameAddress, getPlayerAddress, getPoolAddress, getPoolBonusAddress, getPoolLpAddress, getPoolUnderlyingTokenAccountAddress } from './utils'
+import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
 
 export class GambaProvider {
   gambaProgram: anchor.Program<GambaIdl>
@@ -13,9 +14,11 @@ export class GambaProvider {
 
   constructor(
     connection: Connection,
-    wallet: GambaProviderWallet,
+    walletOrKeypair: GambaProviderWallet | Keypair,
     opts: ConfirmOptions = anchor.AnchorProvider.defaultOptions(),
   ) {
+    const wallet = walletOrKeypair instanceof Keypair ? new NodeWallet(walletOrKeypair) : walletOrKeypair
+
     this.anchorProvider = new anchor.AnchorProvider(
       connection,
       wallet,
@@ -48,7 +51,6 @@ export class GambaProvider {
    * @returns Multiple TransactionInstruction in an array
    */
   createPool(underlyingTokenMint: PublicKey, authority: PublicKey, slot: number) {
-
     const gambaStateAta = getAssociatedTokenAddressSync(
       underlyingTokenMint,
       getGambaStateAddress(),
@@ -57,69 +59,67 @@ export class GambaProvider {
     const METADATA_SEED = 'metadata'
     const TOKEN_METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s')
     const pool = getPoolAddress(underlyingTokenMint, authority)
-    const lp_mint = getPoolLpAddress(pool)
-    const bonus_mint = getPoolBonusAddress(pool)
-    const pool_underlying_token_account = getPoolUnderlyingTokenAccountAddress(pool)
-    const pool_bonus_underlying_token_account = PublicKey.findProgramAddressSync([Buffer.from('POOL_BONUS_UNDERLYING_TA'), pool.toBuffer()], PROGRAM_ID)[0]
-    const lpMintMetadata = PublicKey.findProgramAddressSync([Buffer.from(METADATA_SEED), TOKEN_METADATA_PROGRAM_ID.toBuffer(), lp_mint.toBuffer()], TOKEN_METADATA_PROGRAM_ID)[0]
-    const bonusMintMetadata = PublicKey.findProgramAddressSync([Buffer.from(METADATA_SEED), TOKEN_METADATA_PROGRAM_ID.toBuffer(), bonus_mint.toBuffer()], TOKEN_METADATA_PROGRAM_ID)[0]
+    const lpMint = getPoolLpAddress(pool)
+    const bonusMint = getPoolBonusAddress(pool)
+    const poolUnderlyingTokenAccount = getPoolUnderlyingTokenAccountAddress(pool)
+    const [poolBonusUnderlyingTokenAccount] = PublicKey.findProgramAddressSync([Buffer.from('POOL_BONUS_UNDERLYING_TA'), pool.toBuffer()], PROGRAM_ID)
+    const [lpMintMetadata] = PublicKey.findProgramAddressSync([Buffer.from(METADATA_SEED), TOKEN_METADATA_PROGRAM_ID.toBuffer(), lpMint.toBuffer()], TOKEN_METADATA_PROGRAM_ID)
+    const [bonusMintMetadata] = PublicKey.findProgramAddressSync([Buffer.from(METADATA_SEED), TOKEN_METADATA_PROGRAM_ID.toBuffer(), bonusMint.toBuffer()], TOKEN_METADATA_PROGRAM_ID)
 
     //more addresses for lookup table
     const gamba_state = getGambaStateAddress()
-    const pool_jackpot_token_account = PublicKey.findProgramAddressSync([Buffer.from('POOL_JACKPOT'), pool.toBuffer()], PROGRAM_ID)[0]
-    
-    const [lookupTableInst, lookupTableAddress] = AddressLookupTableProgram.createLookupTable({
-      authority: this.anchorProvider.wallet.publicKey,
-      payer : this.anchorProvider.wallet.publicKey,
-      recentSlot: slot-1,
-    })
+    const poolJackpotTokenAccount = PublicKey.findProgramAddressSync([Buffer.from('POOL_JACKPOT'), pool.toBuffer()], PROGRAM_ID)[0]
 
-    
+    const [lookupTableInst, lookupTableAddress] = AddressLookupTableProgram.createLookupTable({
+      authority: this.wallet.publicKey,
+      payer: this.wallet.publicKey,
+      recentSlot: slot - 1,
+    })
 
     const addAddressesInstruction = AddressLookupTableProgram.extendLookupTable({
-      payer: this.anchorProvider.wallet.publicKey,
-      authority: this.anchorProvider.wallet.publicKey,
+      payer: this.wallet.publicKey,
+      authority: this.wallet.publicKey,
       lookupTable: lookupTableAddress,
-      addresses:[
+      addresses: [
         pool,
         underlyingTokenMint,
-        pool_underlying_token_account,
-        pool_bonus_underlying_token_account,
+        poolUnderlyingTokenAccount,
+        poolBonusUnderlyingTokenAccount,
         gamba_state,
         gambaStateAta,
-        bonus_mint,
-        pool_jackpot_token_account,
-        ],
+        bonusMint,
+        poolJackpotTokenAccount,
+      ],
     })
-    
+
     const freezeInstruction = AddressLookupTableProgram.freezeLookupTable({
-      authority: this.anchorProvider.wallet.publicKey,
+      authority: this.wallet.publicKey,
       lookupTable: lookupTableAddress,
     })
 
     const createPoolInstruction = this.gambaProgram.methods
       .poolInitialize(authority, lookupTableAddress)
       .accounts({
-        initializer: this.anchorProvider.wallet.publicKey,
+        initializer: this.wallet.publicKey,
         gambaState: getGambaStateAddress(),
         underlyingTokenMint: underlyingTokenMint,
-        pool: pool,
-        poolUnderlyingTokenAccount: pool_underlying_token_account,
-        poolBonusUnderlyingTokenAccount: pool_bonus_underlying_token_account,
+        pool,
+        poolUnderlyingTokenAccount,
+        poolBonusUnderlyingTokenAccount,
         gambaStateAta,
-        lpMint: lp_mint,
-        lpMintMetadata: lpMintMetadata,
-        bonusMint: bonus_mint,
-        bonusMintMetadata: bonusMintMetadata,
-        associatedTokenProgram: new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'),
-        tokenProgram: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
-        systemProgram: anchor.web3.SystemProgram.programId,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        lpMint,
+        lpMintMetadata,
+        bonusMint,
+        bonusMintMetadata,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY,
         tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
       })
       .instruction()
 
-      return [lookupTableInst, addAddressesInstruction, freezeInstruction, createPoolInstruction]
+    return [lookupTableInst, addAddressesInstruction, freezeInstruction, createPoolInstruction]
   }
 
   /**
@@ -131,19 +131,19 @@ export class GambaProvider {
   depositToPool(
     pool: PublicKey,
     underlyingTokenMint: PublicKey,
-    amount: number,
+    amount: bigint | number,
   ) {
     const poolUnderlyingTokenAccount = getPoolUnderlyingTokenAccountAddress(pool)
     const poolLpMint = getPoolLpAddress(pool)
 
     const userUnderlyingAta = getAssociatedTokenAddressSync(
       underlyingTokenMint,
-      this.anchorProvider.wallet.publicKey,
+      this.wallet.publicKey,
     )
 
     const userLpAta = getAssociatedTokenAddressSync(
       poolLpMint,
-      this.anchorProvider.wallet.publicKey,
+      this.wallet.publicKey,
     )
 
     return this.gambaProgram.methods
@@ -167,19 +167,19 @@ export class GambaProvider {
   withdrawFromPool(
     pool: PublicKey,
     underlyingTokenMint: PublicKey,
-    amount: number,
+    amount: bigint | number,
   ) {
     const poolUnderlyingTokenAccount = getPoolUnderlyingTokenAccountAddress(pool)
     const poolLpMint = getPoolLpAddress(pool)
 
     const userUnderlyingAta = getAssociatedTokenAddressSync(
       underlyingTokenMint,
-      this.anchorProvider.wallet.publicKey,
+      this.wallet.publicKey,
     )
 
     const userLpAta = getAssociatedTokenAddressSync(
       poolLpMint,
-      this.anchorProvider.wallet.publicKey,
+      this.wallet.publicKey,
     )
 
     return this.gambaProgram.methods
@@ -203,25 +203,25 @@ export class GambaProvider {
   mintBonusTokens(
     pool: PublicKey,
     underlyingTokenMint: PublicKey,
-    amount: number,
+    amount: bigint | number,
   ) {
     const poolBonusMint = getPoolBonusAddress(pool)
 
     const userUnderlyingAta = getAssociatedTokenAddressSync(
       underlyingTokenMint,
-      this.anchorProvider.wallet.publicKey,
+      this.wallet.publicKey,
     )
 
     const userBonusAta = getAssociatedTokenAddressSync(
       poolBonusMint,
-      this.anchorProvider.wallet.publicKey,
+      this.wallet.publicKey,
     )
 
     return this.gambaProgram.methods
       .poolMintBonusTokens(new anchor.BN(amount))
       .accounts({
         pool,
-        user: this.anchorProvider.wallet.publicKey,
+        user: this.wallet.publicKey,
         underlyingTokenMint,
         userUnderlyingAta,
         userBonusAta,

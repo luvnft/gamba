@@ -1,34 +1,30 @@
 import { Button, Flex, Grid, IconButton, Text, TextField } from "@radix-ui/themes"
-import { decodeAta, getUserWsolAccount, isNativeMint, unwrapSol } from "gamba-core-v2"
-import { useAccount, useGambaProvider, useSendTransaction, useWalletAddress } from "gamba-react-v2"
-import { TokenValue, useTokenMeta } from "gamba-react-ui-v2"
+import { isNativeMint, unwrapSol } from "gamba-core-v2"
+import { useGambaProvider, useSendTransaction, useWalletAddress } from "gamba-react-v2"
+import BigDecimal from 'js-big-decimal'
 import React from "react"
 import { mutate } from "swr"
 
 import { Spinner } from "@/components/Spinner"
-import { useBalance, useToast, formatTokenAmount } from "@/hooks"
-import { UiPool } from "@/PoolList"
+import { TokenValue2 } from "@/components/TokenValue2"
+import { useBalance, useToast } from "@/hooks"
+import { useTokenMeta } from "@/hooks/useTokenMeta"
+import { UiPool } from "@/views/Dashboard/PoolList"
+import { stringtoBigIntUnits } from "./PoolDeposit"
 
-export function PoolWithdraw({ pool, jupiterTokens }: { pool: UiPool, jupiterTokens: any[] }) {
+export function PoolWithdraw({ pool }: { pool: UiPool }) {
   const toast = useToast()
   const gamba = useGambaProvider()
   const user = useWalletAddress()
   const [loading, setLoading] = React.useState(false)
   const [amountText, setAmountText] = React.useState("")
   const token = useTokenMeta(pool.underlyingTokenMint)
-  const balances = useBalance(pool.underlyingTokenMint)
+  const balances = useBalance(pool.underlyingTokenMint, pool.poolAuthority)
   const sendTransaction = useSendTransaction()
 
-  const jupiterToken = jupiterTokens.find(jt => jt.mint.equals(pool.underlyingTokenMint));
-  const decimals = jupiterToken?.decimals ?? token?.decimals ?? 0;
-
-  const amount = Math.round(Number(amountText) * (10 ** (jupiterToken?.decimals ?? 0)))
-
-
-  const amountBigInt = BigInt(Math.round(Number(amountText) * 10 ** decimals));
-  const ratioBigInt = BigInt(Math.round(pool.ratio * 10 ** decimals));
-  const calculatedAmount = amountBigInt * ratioBigInt / BigInt(10 ** decimals);
-
+  // const amount = Math.round(Number(amountText) * (10 ** token.decimals))
+  const amount = stringtoBigIntUnits(amountText, token.decimals)
+  const receiveUnderlyingAmount = BigInt(new BigDecimal(amount).multiply(new BigDecimal(pool.ratio)).round().getValue())
 
   const withdraw = async () => {
     try {
@@ -83,35 +79,42 @@ export function PoolWithdraw({ pool, jupiterTokens }: { pool: UiPool, jupiterTok
             onFocus={event => event.target.select()}
           />
           <TextField.Slot>
-            <IconButton onClick={() => setAmountText(String(.25 * balances.lpBalance / (10 ** decimals)))} variant="ghost">
+            <IconButton onClick={() => setAmountText(String(.25 * balances.lpBalance / (10 ** token.decimals)))} variant="ghost">
               25%
             </IconButton>
-            <IconButton onClick={() => setAmountText(String(.5 * balances.lpBalance / (10 ** decimals)))} variant="ghost">
+            <IconButton onClick={() => setAmountText(String(.5 * balances.lpBalance / (10 ** token.decimals)))} variant="ghost">
               50%
             </IconButton>
-            <IconButton onClick={() => setAmountText(String(balances.lpBalance / (10 ** decimals)))} variant="ghost">
+            <IconButton onClick={() => setAmountText(String(balances.lpBalance / (10 ** token.decimals)))} variant="ghost">
               MAX
             </IconButton>
           </TextField.Slot>
         </TextField.Root>
-        {/* <Flex justify="between">
-          <Text size="2" color="gray">
-            Balance
-          </Text>
-          <Text size="2">
-            <TokenValue exact amount={balances.lpBalance} mint={token.mint} suffix="LP" />
-          </Text>
-        </Flex> */}
         <Flex justify="between">
-          <Text size="2" color="gray">
+          <Text color="gray">
             Receive
           </Text>
-          <Text size="2">
-            {/* <TokenValue exact amount={amount * pool.ratio} mint={pool.underlyingTokenMint} /> */}
-            {formatTokenAmount(calculatedAmount, decimals)} {jupiterToken?.symbol}
+          <Text>
+            <TokenValue2
+              exact
+              amount={receiveUnderlyingAmount}
+              mint={pool.underlyingTokenMint}
+            />
           </Text>
         </Flex>
-        <Button size="3" variant="soft" onClick={withdraw} disabled={loading || !amount}>
+        <Flex justify="between">
+          <Text color="gray">
+            Value
+          </Text>
+          <Text>
+            <TokenValue2
+              dollar
+              amount={receiveUnderlyingAmount}
+              mint={pool.underlyingTokenMint}
+            />
+          </Text>
+        </Flex>
+        <Button size="3" variant="soft" onClick={withdraw} disabled={loading || !amount || amount > balances.lpBalance}>
           Withdraw {loading && <Spinner $small />}
         </Button>
       </Grid>

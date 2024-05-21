@@ -7,6 +7,21 @@ import { withTooltip } from "@visx/tooltip"
 import { bisector, extent, max, min } from "@visx/vendor/d3-array"
 import React from "react"
 
+// function getRollingAverage(data: LineChartDataPoint[], windowSize: number): number[] {
+//   const rollingAverage: number[] = [];
+
+//   for (let i = 0; i < data.length; i++) {
+//      const start = Math.max(0, i - windowSize + 1);
+//      const end = i + 1;
+//      const window = data.slice(start, end);
+//      const sum = window.reduce((acc, d) => acc + d.value, 0);
+//      const average = sum / window.length;
+//      rollingAverage.push(average);
+//   }
+
+//   return rollingAverage;
+// }
+
 export interface LineChartData {
   data: LineChartDataPoint[]
 }
@@ -17,7 +32,7 @@ export interface LineChartDataPoint {
 }
 
 const getDate = (d: LineChartDataPoint) => new Date(d.date)
-const getValue = (d: LineChartDataPoint) => d.value
+const getValue = (d: LineChartDataPoint) => d?.value
 
 const bisectDate = bisector<LineChartDataPoint, Date>(d => new Date(d.date)).left
 
@@ -46,7 +61,7 @@ const Inner = withTooltip<AreaProps, any>(
   }) => {
     const { data } = chart
     const innerWidth = width - margin.left - margin.right
-    const innerHeight = height - margin.top - margin.bottom
+    const innerHeight = Math.max(1, height - margin.top - margin.bottom)
 
     const dateScale = React.useMemo(
       () => scaleTime({

@@ -1,7 +1,9 @@
+import { useBonfidaName, usePlatformMeta } from "@/hooks"
 import { getPlatformMeta } from "@/platforms"
 import { Avatar, Flex, Text } from "@radix-ui/themes"
 import { AvatarProps } from "@radix-ui/themes/dist/cjs/components/avatar"
 import { PublicKey } from "@solana/web3.js"
+import { minidenticon } from 'minidenticons'
 import React from "react"
 
 interface AccountItemProps {
@@ -12,26 +14,42 @@ interface AccountItemProps {
   avatarSize?: AvatarProps["size"]
 }
 
-const truncateString = (s: string, startLen = 4, endLen = startLen) => s.slice(0, startLen) + "..." + s.slice(-endLen)
+export const truncateString = (s: string, startLen = 4, endLen = startLen) => s.slice(0, startLen) + "..." + s.slice(-endLen)
 
 type AccountItemProps2 = Pick<AccountItemProps, "avatarSize" | "address">
 
 export function PlatformAccountItem(props: AccountItemProps2) {
-  const meta = getPlatformMeta(props.address)
+  const meta = usePlatformMeta(props.address)
   return (
     <AccountItem
+      {...props}
       image={meta.image}
       name={meta.name}
-      {...props}
+    />
+  )
+}
+
+export function Identicon(props: AccountItemProps2) {
+  const domainName = useBonfidaName(props.address)
+  const image = React.useMemo(() => 'data:image/svg+xml;utf8,' + encodeURIComponent(minidenticon(props.address.toString())), [props.address])
+  return (
+    <Avatar
+      size={props.avatarSize ?? "1"}
+      src={image}
+      fallback={props.address.toString().substring(0, 2)}
     />
   )
 }
 
 export function PlayerAccountItem(props: AccountItemProps2) {
+  const domainName = useBonfidaName(props.address)
+  const image = React.useMemo(() => 'data:image/svg+xml;utf8,' + encodeURIComponent(minidenticon(props.address.toString())), [props.address])
   return (
     <AccountItem
       color="orange"
       {...props}
+      name={domainName}
+      image={image}
     />
   )
 }

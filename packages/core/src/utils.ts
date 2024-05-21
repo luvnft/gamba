@@ -1,35 +1,26 @@
 import { BorshAccountsCoder, IdlAccounts } from '@coral-xyz/anchor'
-import { AccountLayout, NATIVE_MINT, createAssociatedTokenAccountInstruction, createCloseAccountInstruction, createSyncNativeInstruction, getAssociatedTokenAddressSync } from '@solana/spl-token'
-import { AccountInfo, Connection, PublicKey, SystemProgram } from '@solana/web3.js'
+import { AccountLayout, NATIVE_MINT, getAssociatedTokenAddressSync } from '@solana/spl-token'
+import { AccountInfo, Connection, PublicKey } from '@solana/web3.js'
 import { GambaIdl, GameState } from '.'
 import { GAMBA_STATE_SEED, GAME_SEED, PLAYER_SEED, POOL_ATA_SEED, POOL_BONUS_MINT_SEED, POOL_BONUS_UNDERLYING_TA_SEED, POOL_JACKPOT_SEED, POOL_LP_MINT_SEED, POOL_SEED, PROGRAM_ID } from './constants'
 import { IDL } from './idl'
 
-export const hmac256 = async (secretKey: string, message: string, algorithm = 'SHA-256') => {
-  const encoder = new TextEncoder()
+export const hmac256 = async (secretKey: string, message: string) => {
+  const encoder = new TextEncoder
   const messageUint8Array = encoder.encode(message)
   const keyUint8Array = encoder.encode(secretKey)
-  const cryptoKey = await window.crypto.subtle.importKey(
-    'raw',
-    keyUint8Array,
-    { name: 'HMAC', hash: algorithm },
-    false,
-    ['sign'],
-  )
-  const signature = await window.crypto.subtle.sign(
-    'HMAC',
-    cryptoKey,
-    messageUint8Array,
-  )
-  const hashArray = Array.from(new Uint8Array(signature))
-  const hashHex = hashArray
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-  return hashHex
+  const cryptoKey = await crypto.subtle.importKey('raw', keyUint8Array, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageUint8Array)
+  return Array.from(new Uint8Array(signature)).map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
 export const getGameHash = (rngSeed: string, clientSeed: string, nonce: number) => {
   return hmac256(rngSeed, [clientSeed, nonce].join('-'))
+}
+
+export const getResultNumber = async (rngSeed: string, clientSeed: string, nonce: number) => {
+  const hash = await getGameHash(rngSeed, clientSeed, nonce)
+  return parseInt(hash.substring(0, 5), 16)
 }
 
 const accountsCoder = new BorshAccountsCoder(IDL)
@@ -69,11 +60,12 @@ export const getPdaAddress = (...seeds: (Uint8Array | Buffer)[]) => {
   return address
 }
 
-export const getPoolAddress = (underlyingMint: PublicKey, authority = new PublicKey('11111111111111111111111111111111')) => getPdaAddress(
-  Buffer.from(POOL_SEED),
-  underlyingMint.toBytes(),
-  authority.toBytes(),
-)
+export const getPoolAddress = (underlyingMint: PublicKey, authority = new PublicKey('11111111111111111111111111111111')) =>
+  getPdaAddress(
+    Buffer.from(POOL_SEED),
+    underlyingMint.toBytes(),
+    authority.toBytes(),
+  )
 
 export const getGambaStateAddress = () => getPdaAddress(
   Buffer.from(GAMBA_STATE_SEED),
@@ -152,48 +144,6 @@ export const getUserWsolAccount = (user: PublicKey) => {
 }
 
 export const isNativeMint = (pubkey: PublicKey) => NATIVE_MINT.equals(pubkey)
-
-export const wrapSol = async (
-  from: PublicKey,
-  amount: number,
-  create: boolean,
-) => {
-  const wsolAta = getUserWsolAccount(from)
-
-  const instructions = [
-    SystemProgram.transfer({
-      fromPubkey: from,
-      toPubkey: wsolAta,
-      lamports: amount,
-    }),
-    createSyncNativeInstruction(wsolAta),
-  ]
-
-  if (create) {
-    return [
-      createAssociatedTokenAccountInstruction(
-        from,
-        wsolAta,
-        from,
-        NATIVE_MINT,
-      ),
-      ...instructions,
-    ]
-  }
-
-  return instructions
-}
-
-export const unwrapSol = async (
-  from: PublicKey,
-) => {
-  const wsolAta = getUserWsolAccount(from)
-  return createCloseAccountInstruction(
-    wsolAta,
-    from,
-    from,
-  )
-}
 
 export type GameResult = ReturnType<typeof parseResult>
 

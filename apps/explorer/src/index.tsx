@@ -7,35 +7,13 @@ import { Theme } from "@radix-ui/themes"
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react"
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui"
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets"
-import { clusterApiUrl } from "@solana/web3.js"
 import { GambaProvider } from "gamba-react-v2"
 import React from "react"
 import ReactDOM from "react-dom/client"
-import { HashRouter } from "react-router-dom"
-import { create } from "zustand"
-import { createJSONStorage, persist } from "zustand/middleware"
-
+import { BrowserRouter } from "react-router-dom"
 import { App } from "./App"
 
 const root = ReactDOM.createRoot(document.getElementById("root")!)
-
-interface RpcThingyStore {
-  endpoint: string
-  set: (endpoint: string) => void
-}
-
-export const useRpcThingy = create(
-  persist<RpcThingyStore>(
-    set => ({
-      endpoint: clusterApiUrl(),
-      set: endpoint => set({ endpoint }),
-    }),
-    {
-      name: "rpc",
-      storage: createJSONStorage(() => sessionStorage),
-    },
-  ),
-)
 
 function Root() {
   const wallets = React.useMemo(
@@ -48,7 +26,7 @@ function Root() {
 
   return (
     <Theme accentColor="iris" radius="large" panelBackground="translucent">
-      <HashRouter>
+      <BrowserRouter>
         <ConnectionProvider endpoint={import.meta.env.VITE_RPC_ENDPOINT} config={{ commitment: "processed" }}>
           <WalletProvider autoConnect wallets={wallets}>
             <WalletModalProvider>
@@ -60,7 +38,7 @@ function Root() {
             </WalletModalProvider>
           </WalletProvider>
         </ConnectionProvider>
-      </HashRouter>
+      </BrowserRouter>
     </Theme>
   )
 }

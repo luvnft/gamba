@@ -1,19 +1,32 @@
 import { Button, Card, Dialog, Flex, Grid, Heading, IconButton, Text, TextField } from "@radix-ui/themes"
 import { PublicKey } from "@solana/web3.js"
-import { decodeAta, getUserWsolAccount, isNativeMint, wrapSol } from "gamba-core-v2"
+import { decodeAta, decodeGambaState, getGambaStateAddress, getUserWsolAccount, isNativeMint, wrapSol } from "gamba-core-v2"
 import { useAccount, useGambaProgram, useGambaProvider, useSendTransaction, useWalletAddress } from "gamba-react-v2"
-import { TokenValue, useTokenMeta } from "gamba-react-ui-v2"
+import BigDecimal from 'js-big-decimal'
 import React from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import useSWR, { mutate } from "swr"
 
 import { Spinner } from "@/components/Spinner"
-import { useBalance, useToast, fetchJupiterTokenList, formatTokenAmount } from "@/hooks"
-import { fetchPool, UiPool } from "@/PoolList"
+import { useBalance, useToast } from "@/hooks"
+import { UiPool, fetchPool } from "@/views/Dashboard/PoolList"
 
-import { PoolHeader } from "./PoolView"
+import { TokenValue2 } from "@/components/TokenValue2"
+import { useTokenMeta } from "@/hooks/useTokenMeta"
+import { useWallet } from "@solana/wallet-adapter-react"
+import { ConnectUserCard } from "../Debug/DebugUser"
+import { PoolHeader } from "./PoolHeader"
 
-export function PoolDeposit({ pool, jupiterTokens }: {pool: UiPool, jupiterTokens: any[]}) {
+export const stringtoBigIntUnits = (s: string, decimals: number) => {
+  try {
+    const ints = new BigDecimal(s).multiply(new BigDecimal(10 ** decimals)).round().getValue()
+    return BigInt(ints)
+  } catch {
+    return BigInt(0)
+  }
+}
+
+export function PoolDeposit({ pool }: {pool: UiPool}) {
   const navigate = useNavigate()
   const gamba = useGambaProvider()
   const user = useWalletAddress()
@@ -24,13 +37,9 @@ export function PoolDeposit({ pool, jupiterTokens }: {pool: UiPool, jupiterToken
   const sendTransaction = useSendTransaction()
   const toast = useToast()
   const wSolAccount = useAccount(getUserWsolAccount(user), decodeAta)
-
-  // Find the Jupiter token that matches the pool's underlying token mint
-  const jupiterToken = jupiterTokens.find(jt => jt.mint.equals(pool.state.underlyingTokenMint));
-
-  // Use the decimals from Jupiter token if available, otherwise fallback to token's metadata
-  const decimals = jupiterToken?.decimals ?? token?.decimals ?? 0;
-  const amount = Math.round(Number(amountText) * (10 ** decimals));
+  const gambaState = useAccount(getGambaStateAddress(), decodeGambaState)
+  const amount = stringtoBigIntUnits(amountText, token.decimals)
+  const receiveLpAmount = BigInt(new BigDecimal(amount).divide(new BigDecimal(pool.ratio)).round().getValue())
 
   const deposit = async () => {
     try {
@@ -63,6 +72,7 @@ export function PoolDeposit({ pool, jupiterTokens }: {pool: UiPool, jupiterToken
       mutate(`pool-${publicKey.toBase58()}`)
 
       navigate("/pool/" + pool.publicKey.toBase58())
+
       toast({
         title: "🫡 Deposited to pool",
         description: "Deposit successful",
@@ -74,20 +84,11 @@ export function PoolDeposit({ pool, jupiterTokens }: {pool: UiPool, jupiterToken
     }
   }
 
-  // Calculate the amount of LP tokens to receive in formatTokenAmount
-  const amountBigInt = BigInt(amount) 
-  const ratioBigInt = BigInt(Math.round(pool.ratio * (10 ** decimals))) 
-  const calculatedAmount = amountBigInt * BigInt(10 ** decimals) / ratioBigInt
-
-  if (!pool || !jupiterTokens.length) {
-    return <Spinner />
-  }
-
   return (
     <>
       <Grid gap="2">
         <Heading>
-          Add Liqudity
+          Add Liquidity
         </Heading>
         <TextField.Root>
           <TextField.Input
@@ -98,46 +99,64 @@ export function PoolDeposit({ pool, jupiterTokens }: {pool: UiPool, jupiterToken
             onFocus={event => event.target.focus()}
           />
           <TextField.Slot>
-            <IconButton onClick={() => setAmountText(String(balance.balance / (10 ** decimals)))} size="1" variant="ghost">
+            <IconButton onClick={() => setAmountText(String(balance.balance / (10 ** token.decimals)))} size="1" variant="ghost">
               MAX
             </IconButton>
           </TextField.Slot>
         </TextField.Root>
         <Flex justify="between">
-          <Text size="2" color="gray">
+          <Text color="gray">
             Balance
           </Text>
-          <Text size="2">
-            {/* <TokenValue exact amount={balance.balance} mint={token.mint} /> */}
-            {formatTokenAmount(balance.balance, decimals)} {jupiterToken.symbol}
+          <Text>
+            <TokenValue2 exact amount={balance.balance} mint={token.mint} />
           </Text>
         </Flex>
         <Flex justify="between">
-          <Text size="2" color="gray">
+          <Text color="gray">
+            Value
+          </Text>
+          <Text>
+            <TokenValue2
+              dollar
+              amount={receiveLpAmount}
+              mint={pool.underlyingTokenMint}
+            />
+          </Text>
+        </Flex>
+        <Flex justify="between">
+          <Text color="gray">
             Receive
           </Text>
-          <Text size="2">
-            {/* <TokenValue exact amount={amount / pool.ratio} mint={pool.underlyingTokenMint} suffix="LP" /> */}
-            {formatTokenAmount(calculatedAmount, decimals)} LP
+          <Text>
+            <TokenValue2
+              exact
+              amount={receiveLpAmount}
+              mint={pool.underlyingTokenMint}
+              suffix="LP"
+            />
           </Text>
         </Flex>
         <Dialog.Root>
           <Dialog.Trigger>
-            <Button disabled={loading || !amount} size="3" variant="soft">
+            <Button disabled={loading} size="3" variant="soft">
               Deposit {loading && <Spinner $small />}
             </Button>
           </Dialog.Trigger>
           <Dialog.Content>
             <Flex direction="column" gap="4">
               <Heading>Warning!</Heading>
-              <Text>
+              <Text color="red">
                 Gamba v2 is <strong>unaudited</strong>. The tokens you are about to deposit could vanish at any point in case of an undetected bug or exploit. We offer no refunds.
               </Text>
               <Text>
                 The pool is also subject to volatility and you are at risk of losing money if the pool performs poorly.
               </Text>
+              <Text>
+                The play fee is currently <b>{(gambaState?.defaultPoolFee.toNumber() ?? 0) / 100}%</b>.
+              </Text>
               <Dialog.Close>
-                <Button variant="soft" color="red" onClick={deposit}>
+                <Button size="3" variant="soft" onClick={deposit}>
                   I know what I'm doing. Deposit
                 </Button>
               </Dialog.Close>
@@ -154,27 +173,21 @@ export default function PoolDepositView() {
   const params = useParams<{poolId: string}>()
   const poolId = React.useMemo(() => new PublicKey(params.poolId!), [params.poolId])
   const { data } = useSWR("pool-" + params.poolId!, () => fetchPool(program.provider.connection, poolId))
-
-  const [jupiterTokens, setJupiterTokens] = React.useState([])
-
-  React.useEffect(() => {
-    fetchJupiterTokenList().then(setJupiterTokens).catch(console.error)
-  }, [])
-
-  if ( !jupiterTokens.length) {
-    return <Spinner />
-  }
-
+  const wallet = useWallet()
   return (
     <>
       {data && (
         <Grid gap="4">
           <Flex justify="between" align="end" py="4">
-            <PoolHeader pool={data} jupiterTokens={jupiterTokens}/>
+            <PoolHeader pool={data} />
           </Flex>
-          <Card size="3">
-            <PoolDeposit pool={data} jupiterTokens={jupiterTokens}/>
-          </Card>
+          {wallet.connected ? (
+            <Card size="3">
+              <PoolDeposit pool={data} />
+            </Card>
+          ) : (
+            <ConnectUserCard />
+          )}
         </Grid>
       )}
     </>

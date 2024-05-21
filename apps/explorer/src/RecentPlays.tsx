@@ -1,16 +1,16 @@
-import { Badge, Box, Flex, Table } from "@radix-ui/themes"
-import { useConnection } from "@solana/wallet-adapter-react"
+import { Badge, Button, Card, Flex, Grid, Table, Text } from "@radix-ui/themes"
 import { PublicKey } from "@solana/web3.js"
-import { BPS_PER_WHOLE, GambaEvent } from "gamba-core-v2"
-import { TokenValue } from "gamba-react-ui-v2"
 import React from "react"
-import useSWR from "swr"
+import useSWRInfinite from 'swr/infinite'
 
 import { TokenAvatar } from "@/components"
 import { TableRowNavLink } from "@/components/TableRowLink"
 
-import { fetchRecentPlays } from "./api"
+import { PlusIcon } from "@radix-ui/react-icons"
+import { RecentPlaysResponse, apiFetcher, getApiUrl } from "./api"
 import { PlatformAccountItem, PlayerAccountItem } from "./components/AccountItem"
+import { SkeletonTableRows } from "./components/Skeleton"
+import { TokenValue2 } from "./components/TokenValue2"
 
 export function TimeDiff({ time }: {time: number}) {
   const diff = (Date.now() - time)
@@ -18,6 +18,9 @@ export function TimeDiff({ time }: {time: number}) {
     const seconds = Math.floor(diff / 1000)
     const minutes = Math.floor(seconds / 60)
     const hours = Math.floor(minutes / 60)
+    if (hours >= 24) {
+      return Math.floor(hours / 24) + "d ago"
+    }
     if (hours >= 1) {
       return hours + "h ago"
     }
@@ -28,12 +31,48 @@ export function TimeDiff({ time }: {time: number}) {
   }, [diff])
 }
 
-export default function RecentPlays({ pool }: {pool?: PublicKey}) {
-  const { connection } = useConnection()
-  const { data: events = [] } = useSWR(() => pool ? ("plays-" + pool.toBase58()) : "plays", () => fetchRecentPlays(connection, pool))
+interface RecentPlaysProps {
+  pool?: PublicKey | string
+  creator?: PublicKey | string
+  user?: PublicKey | string
+  onlyJackpots?: boolean
+}
+
+export default function RecentPlays({ pool, creator, user, onlyJackpots }: RecentPlaysProps) {
+  const {
+    data = [],
+    size,
+    setSize,
+    isValidating,
+    isLoading,
+  } = useSWRInfinite(
+    (index, previousData) =>
+      getApiUrl("/events/settledGames", {
+        onlyJackpots,
+        pool: pool?.toString(),
+        creator: creator?.toString(),
+        user: user?.toString(),
+        page: index,
+        itemsPerPage: 10,
+      }),
+    async (endpoint) => {
+      const data = await apiFetcher<RecentPlaysResponse>(endpoint)
+      return { total: data.total, results: data.results }
+    }
+  )
+
+  const numResults = React.useMemo(() => data[0] ? data[0].total : 0, [data])
+
+  // if (isLoading) {
+  //   return (
+  //     <>
+  //       <SkeletonCard />
+  //     </>
+  //   )
+  // }
 
   return (
-    <Box>
+    <Flex direction="column" gap="2">
       <Table.Root variant="surface">
         <Table.Header>
           <Table.Row>
@@ -55,59 +94,83 @@ export default function RecentPlays({ pool }: {pool?: PublicKey}) {
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {events.map(
-            event => {
-              const game = event.data as GambaEvent<"GameSettled">["data"]
-              const multiplier = game.bet[game.resultIndex.toNumber()] / BPS_PER_WHOLE
-              const wager = game.wager.toNumber()
-              const payout = multiplier * wager
-              const profit = payout - wager
-
-              // const payout = event.result.wager * event.result.multiplier
-              return (
-                <TableRowNavLink to={"/tx/" + event.signature} key={event.signature}>
-                  <Table.Cell>
-                    <PlatformAccountItem avatarSize="1" address={game.creator} />
-                  </Table.Cell>
-                  <Table.Cell>
-                    <PlayerAccountItem avatarSize="1" address={game.user} />
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Flex gap="1">
-                      <TokenAvatar
-                        size="1"
-                        mint={game.tokenMint}
-                      />
-                      <TokenValue
-                        amount={wager}
-                        mint={game.tokenMint}
-                      />
-                    </Flex>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Flex gap="1" align="center">
-                      <TokenAvatar
-                        size="1"
-                        mint={game.tokenMint}
-                      />
-                      <TokenValue
-                        amount={payout}
-                        mint={game.tokenMint}
-                      />
-                      <Badge color={payout >= wager ? "green" : "gray"}>
-                        {Math.abs(multiplier).toFixed(2)}x
-                      </Badge>
-                    </Flex>
-                  </Table.Cell>
-                  <Table.Cell align="right">
-                    <TimeDiff time={event.time} />
-                  </Table.Cell>
-                </TableRowNavLink>
+          {isLoading && (
+            <SkeletonTableRows cells={5} />
+          )}
+          {data.flatMap(
+            ({results}) => (
+              results.map(
+                (result) => {
+                  return (
+                    <TableRowNavLink to={"/tx/" + result.signature} key={result.signature}>
+                      <Table.Cell>
+                        <PlatformAccountItem avatarSize="1" address={result.creator} />
+                      </Table.Cell>
+                      <Table.Cell>
+                        <PlayerAccountItem avatarSize="1" address={result.user} />
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Flex gap="1" align="center">
+                          <TokenAvatar
+                            size="1"
+                            mint={result.token}
+                          />
+                          <TokenValue2
+                            amount={result.wager}
+                            mint={result.token}
+                          />
+                        </Flex>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Flex gap="1" align="center">
+                          <TokenAvatar
+                            size="1"
+                            mint={result.token}
+                          />
+                          <TokenValue2
+                            amount={result.payout}
+                            mint={result.token}
+                          />
+                          <Badge color={result.payout >= result.wager ? "green" : "gray"}>
+                            {Math.abs(result.multiplier).toFixed(2)}x
+                          </Badge>
+                          {result.jackpot > 0 && (
+                            <Badge color="pink">
+                              JACKPOT
+                            </Badge>
+                          )}
+                        </Flex>
+                      </Table.Cell>
+                      <Table.Cell align="right">
+                        <TimeDiff time={result.time} />
+                      </Table.Cell>
+                    </TableRowNavLink>
+                  )
+                },
               )
-            },
+            )
           )}
         </Table.Body>
       </Table.Root>
-    </Box>
+      {(!isLoading && !numResults) ? (
+        <Card size="3">
+          <Grid gap="4" align="center" justify="center">
+            <Text align="center" color="gray">
+              No Results!
+            </Text>
+          </Grid>
+        </Card>
+      ) : (
+        <Button
+          disabled={isLoading || isValidating}
+          onClick={() => setSize(size + 1)}
+          variant="soft"
+          size="3"
+          style={{ width: '100%' }}
+        >
+          Load more <PlusIcon />
+        </Button>
+      )}
+    </Flex>
   )
 }

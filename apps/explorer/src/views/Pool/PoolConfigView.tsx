@@ -4,17 +4,16 @@ import { useWallet } from "@solana/wallet-adapter-react"
 import { PublicKey } from "@solana/web3.js"
 import { decodeGambaState, getGambaStateAddress } from "gamba-core-v2"
 import { useAccount, useGambaProgram, useSendTransaction, useWalletAddress } from "gamba-react-v2"
-import { useTokenMeta } from "gamba-react-ui-v2"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
 import useSWR, { mutate } from "swr"
 
 import { Spinner } from "@/components/Spinner"
-import { fetchPool, UiPool } from "@/PoolList"
+import { fetchPool, UiPool } from "@/views/Dashboard/PoolList"
 
+import { useTokenMeta } from "@/hooks/useTokenMeta"
 import PoolGambaConfigDialog from "./PoolGambaConfig"
-import { PoolHeader } from "./PoolView"
-import { fetchJupiterTokenList } from "@/hooks"
+import { PoolHeader } from "./PoolHeader"
 
 const Thing = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <Grid columns="2">
@@ -35,24 +34,22 @@ interface PoolConfigInput {
   depositWhitelistAddress: string
 }
 
-function PoolConfigDialog({ pool, jupiterTokens }: { pool: UiPool, jupiterTokens: any[] }) {
+function PoolConfigDialog({ pool }: { pool: UiPool }) {
   const sendTx = useSendTransaction()
   const program = useGambaProgram()
   const { publicKey } = useWallet()
   const token = useTokenMeta(pool.state.underlyingTokenMint)
 
-  const jupiterToken = jupiterTokens.find(jt => jt.mint.equals(pool.state.underlyingTokenMint))
-  const decimals = jupiterToken?.decimals ?? token?.decimals ?? 0
-
   const gambaState = useAccount(getGambaStateAddress(), decodeGambaState)
   const userPublicKey = useWalletAddress()
   const isPoolAuthority = userPublicKey && pool?.state?.poolAuthority?.equals(userPublicKey)
   const isGambaStateAuthority = userPublicKey && gambaState?.authority?.equals(userPublicKey)
+  const tokenDecimalsBN = new anchor.BN(10).pow(new anchor.BN(token.decimals));
 
   const [input, setInput] = useState<PoolConfigInput>({
-    minWager: String(pool.state.minWager.toNumber() / Math.pow(10, decimals)),
+    minWager: String(pool.state.minWager.toNumber() / Math.pow(10, token.decimals)),
     depositLimit: pool.state.depositLimit,
-    depositLimitAmount: String(pool.state.depositLimitAmount.toNumber() / Math.pow(10, decimals)),
+    depositLimitAmount: String(pool.state.depositLimitAmount.div(tokenDecimalsBN)),
     customPoolFee: pool.state.customPoolFee,
     customPoolFeeBps: String(pool.state.customPoolFeeBps.toNumber() / 100),
     customMaxPayout: pool.state.customMaxPayout,
@@ -61,6 +58,20 @@ function PoolConfigDialog({ pool, jupiterTokens }: { pool: UiPool, jupiterTokens
     depositWhitelistAddress: pool.state.depositWhitelistAddress.toBase58(),
   })
 
+  // Update input when token changes cus token decimals arent fetched right away
+  useEffect(() => {
+    setInput({
+      minWager: String(pool.state.minWager.toNumber() / Math.pow(10, token.decimals)),
+      depositLimit: pool.state.depositLimit,
+      depositLimitAmount: String(pool.state.depositLimitAmount.div(tokenDecimalsBN)), //big number!
+      customPoolFee: pool.state.customPoolFee,
+      customPoolFeeBps: String(pool.state.customPoolFeeBps.toNumber() / 100),
+      customMaxPayout: pool.state.customMaxPayout,
+      customMaxPayoutBps: String(pool.state.customMaxPayoutBps.toNumber() / 100),
+      depositWhitelistRequired: pool.state.depositWhitelistRequired,
+      depositWhitelistAddress: pool.state.depositWhitelistAddress.toBase58(),
+    })}, [token])
+
   const updateInput = (update: Partial<PoolConfigInput>) => {
     setInput(prevInput => ({ ...prevInput, ...update }))
   }
@@ -68,6 +79,7 @@ function PoolConfigDialog({ pool, jupiterTokens }: { pool: UiPool, jupiterTokens
   const handleDecimalChange = (value: string, decimals: number) => {
     return String(parseFloat(value) * Math.pow(10, decimals))
   }
+
 
   const updateConfig = async () => {
     const {
@@ -80,14 +92,14 @@ function PoolConfigDialog({ pool, jupiterTokens }: { pool: UiPool, jupiterTokens
       depositWhitelistAddress,
     } = input
 
-    const poolDepositLimitInSmallestUnit = handleDecimalChange(input.depositLimitAmount, decimals)
-    const poolMinWagerInSmallestUnit = handleDecimalChange(input.minWager, decimals)
+    const poolDepositLimitInSmallestUnit = handleDecimalChange(input.depositLimitAmount, token.decimals)
+    const poolMinWagerInSmallestUnit = handleDecimalChange(input.minWager, token.decimals)
     const customPoolFeeBpsValue = parseFloat(customPoolFeeBps) * 100
     const customMaxPayoutBpsValue = parseFloat(customMaxPayoutBps) * 100
 
     const depositWhitelistPublicKey = new PublicKey(depositWhitelistAddress)
 
-    await sendTx(
+    const tx = await sendTx(
       program.methods
         .poolAuthorityConfig(
           new anchor.BN(poolMinWagerInSmallestUnit),
@@ -104,6 +116,7 @@ function PoolConfigDialog({ pool, jupiterTokens }: { pool: UiPool, jupiterTokens
         .instruction(),
       { confirmation: "confirmed" },
     )
+    console.log("TXID", tx)
     mutate("pool-" + pool.publicKey.toBase58())
   }
 
@@ -207,13 +220,7 @@ export default function PoolConfigureView() {
   const poolId = React.useMemo(() => new PublicKey(params.poolId!), [params.poolId])
   const { data, isLoading } = useSWR("pool-" + params.poolId!, () => fetchPool(program.provider.connection, poolId))
 
-  const [jupiterTokens, setJupiterTokens] = React.useState([])
-
-  React.useEffect(() => {
-    fetchJupiterTokenList().then(setJupiterTokens).catch(console.error)
-  }, [])
-
-  if (isLoading  || jupiterTokens.length === 0) {
+  if (isLoading) {
     return (
       <Flex align="center" justify="center" p="4">
         <Spinner />
@@ -225,9 +232,9 @@ export default function PoolConfigureView() {
       {data && (
         <Grid gap="4">
           <Flex justify="between" align="end" py="4">
-            <PoolHeader pool={data} jupiterTokens={jupiterTokens} />
+            <PoolHeader pool={data} />
           </Flex>
-          <PoolConfigDialog pool={data} jupiterTokens={jupiterTokens} />
+          <PoolConfigDialog pool={data} />
         </Grid>
       )}
     </>

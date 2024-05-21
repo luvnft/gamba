@@ -2,14 +2,13 @@ import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
 import '@solana/wallet-adapter-react-ui/styles.css'
 import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets'
-import { GambaPlatformProvider } from 'gamba-react-ui-v2'
-import { GambaProvider } from 'gamba-react-v2'
+import { GambaPlatformProvider, TokenMetaProvider } from 'gamba-react-ui-v2'
+import { GambaProvider, SendTransactionProvider, createCustomFeePlugin } from 'gamba-react-v2'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { HashRouter } from 'react-router-dom'
+import { BrowserRouter } from 'react-router-dom'
 import App from './App'
-import { PLATFORM_CREATOR_ADDRESS, TOKENS } from './constants'
-import { GAMES } from './games'
+import { DEFAULT_POOL, PLATFORM_CREATOR_ADDRESS, PLATFORM_CREATOR_FEE, PLATFORM_JACKPOT_FEE, RPC_ENDPOINT, TOKEN_METADATA, TOKEN_METADATA_FETCHER } from './constants'
 import './styles.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root')!)
@@ -24,28 +23,39 @@ function Root() {
   )
 
   return (
-    <HashRouter>
+    <BrowserRouter>
       <ConnectionProvider
-        endpoint={import.meta.env.VITE_RPC_ENDPOINT}
+        endpoint={RPC_ENDPOINT}
         config={{ commitment: 'processed' }}
       >
         <WalletProvider autoConnect wallets={wallets}>
           <WalletModalProvider>
-            <GambaProvider>
-              <GambaPlatformProvider
-                creator={PLATFORM_CREATOR_ADDRESS}
-                games={GAMES}
-                tokens={TOKENS}
-                defaultCreatorFee={0.01}
-                defaultJackpotFee={0.001}
-              >
-                <App />
-              </GambaPlatformProvider>
-            </GambaProvider>
+            <TokenMetaProvider
+              tokens={TOKEN_METADATA}
+              fetcher={TOKEN_METADATA_FETCHER}
+            >
+              <SendTransactionProvider priorityFee={400_201}>
+                <GambaProvider
+                  __experimental_plugins={[
+                    // Custom fee (1%)
+                    // createCustomFeePlugin('<SOLANA ADDRESS>', .01),
+                  ]}
+                >
+                  <GambaPlatformProvider
+                    creator={PLATFORM_CREATOR_ADDRESS}
+                    defaultCreatorFee={PLATFORM_CREATOR_FEE}
+                    defaultJackpotFee={PLATFORM_JACKPOT_FEE}
+                    defaultPool={DEFAULT_POOL}
+                  >
+                    <App />
+                  </GambaPlatformProvider>
+                </GambaProvider>
+              </SendTransactionProvider>
+            </TokenMetaProvider>
           </WalletModalProvider>
         </WalletProvider>
       </ConnectionProvider>
-    </HashRouter>
+    </BrowserRouter>
   )
 }
 

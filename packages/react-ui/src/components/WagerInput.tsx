@@ -1,20 +1,32 @@
-import { useBalance, useGamba, useWalletAddress } from 'gamba-react-v2'
+import { useGamba } from 'gamba-react-v2'
 import React from 'react'
 import styled, { css } from 'styled-components'
-import { useCurrentToken, useFees } from '../hooks'
+import { useCurrentToken, useFees, useUserBalance } from '../hooks'
 import { TokenValue } from './TokenValue'
+import { StyledPopup } from './Select'
 
-export interface WagerInputProps {
+export interface WagerInputBaseProps {
   value: number
   onChange: (value: number) => void
 }
+
+export type WagerInputTextProps = {
+  type?: 'text'
+}
+
+export type WagerInputSelectProps = {
+  type: 'select'
+  options: number[]
+}
+
+export type WagerInputProps = WagerInputBaseProps & (WagerInputTextProps | WagerInputSelectProps)
 
 const StyledWagerInput = styled.div<{$edit: boolean}>`
   display: flex;
   justify-content: space-between;
   color: var(--gamba-ui-input-color);
   background: var(--gamba-ui-input-background);
-
+  position: relative;
   border-radius: 10px;
   overflow: hidden;
   ${(props) => props.$edit && css`
@@ -29,6 +41,7 @@ const Flex = styled.button`
   display: flex;
   align-items: center;
   flex-grow: 1;
+  box-sizing: border-box;
 `
 
 const Input = styled.input`
@@ -72,7 +85,11 @@ const Buttons = styled.div`
 const WagerAmount = styled.div`
   text-wrap: nowrap;
   padding: 10px 0;
-  width: 100px;
+  width: 40px;
+
+  @media (min-width: 600px) {
+    width: 100px;
+  }
 
   opacity: .8;
   overflow: hidden;
@@ -82,19 +99,26 @@ export function WagerInput(props: WagerInputProps) {
   const gamba = useGamba()
   const token = useCurrentToken()
   const [input, setInput] = React.useState('')
-  const walletAddress = useWalletAddress()
-  const balance = useBalance(walletAddress, token.mint)
+  const balance = useUserBalance() //useBalance(walletAddress, token.mint)
   const fees = useFees()
-  const [edit, setEdit] = React.useState(false)
+  const [isEditing, setIsEditing] = React.useState(false)
+  const type = props.type ?? 'text'
 
-  const start = () => {
-    setEdit(true)
+  React.useEffect(
+    () => {
+      props.onChange(token.baseWager)
+    },
+    [token.mint.toString()],
+  )
+
+  const edit = () => {
+    setIsEditing(true)
     setInput(String(props.value / (10 ** token.decimals)))
   }
 
   const apply = () => {
     props.onChange(Number(input) * (10 ** token.decimals))
-    setEdit(false)
+    setIsEditing(false)
   }
 
   const x2 = () => {
@@ -104,40 +128,60 @@ export function WagerInput(props: WagerInputProps) {
   }
 
   return (
-    <StyledWagerInput $edit={edit}>
-      <Flex onClick={() => !gamba.isPlaying && start()}>
-        <img src={token.image} height="25px" style={{ margin: '0 5px', borderRadius: '50%', aspectRatio: '1/1' }} />
-        {!edit ? (
-          <WagerAmount
-            title={(props.value / (10 ** token.decimals)).toLocaleString()}
-          >
-            <TokenValue suffix="" amount={props.value} mint={token.mint} />
-          </WagerAmount>
-        ) : (
-          <Input
-            value={input}
-            type="number"
-            max={balance.balance / (10 ** token.decimals)}
-            min={0}
-            step={.05}
-            style={{ width: '100px' }}
-            onChange={(evt) => setInput(evt.target.value)}
-            onKeyDown={(e) => e.code === 'Enter' && apply()}
-            onBlur={(evt) => apply()}
-            disabled={gamba.isPlaying}
-            autoFocus
-            onFocus={(e) => e.target.select()}
-          />
+    <div style={{ position: 'relative' }}>
+      <StyledWagerInput $edit={isEditing}>
+        <Flex onClick={() => !gamba.isPlaying && edit()}>
+          <img src={token.image} height="25px" style={{ margin: '0 5px', borderRadius: '50%', aspectRatio: '1/1' }} />
+          {(!isEditing || type !== 'text') ? (
+            <WagerAmount
+              title={(props.value / (10 ** token.decimals)).toLocaleString()}
+            >
+              <TokenValue suffix="" amount={props.value} mint={token.mint} />
+            </WagerAmount>
+          ) : (
+            <Input
+              value={input}
+              type="number"
+              max={balance.balance / (10 ** token.decimals)}
+              min={0}
+              step={.05}
+              style={{ width: '100px' }}
+              onChange={(evt) => setInput(evt.target.value)}
+              onKeyDown={(e) => e.code === 'Enter' && apply()}
+              onBlur={(evt) => apply()}
+              disabled={gamba.isPlaying}
+              autoFocus
+              onFocus={(e) => e.target.select()}
+            />
+          )}
+        </Flex>
+        {type === 'text' && (
+          <Buttons>
+            <InputButton disabled={gamba.isPlaying} onClick={() => props.onChange(props.value / 2)}>
+              x.5
+            </InputButton>
+            <InputButton disabled={gamba.isPlaying} onClick={x2}>
+              2x
+            </InputButton>
+          </Buttons>
         )}
-      </Flex>
-      <Buttons>
-        <InputButton disabled={gamba.isPlaying} onClick={() => props.onChange(props.value / 2)}>
-          x.5
-        </InputButton>
-        <InputButton disabled={gamba.isPlaying} onClick={x2}>
-          2x
-        </InputButton>
-      </Buttons>
-    </StyledWagerInput>
+      </StyledWagerInput>
+      {props.type === 'select' && isEditing && (
+        <StyledPopup>
+          {props.options.map((val, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                props.onChange(val)
+                setIsEditing(false)
+              }}
+            >
+              <img src={token.image} height="25px" style={{ margin: '0 5px', borderRadius: '50%', aspectRatio: '1/1' }} />
+              <TokenValue amount={val} mint={token.mint} />
+            </button>
+          ))}
+        </StyledPopup>
+      )}
+    </div>
   )
 }

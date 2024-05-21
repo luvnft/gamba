@@ -1,13 +1,15 @@
 import { GambaUi, useGambaAudioStore } from 'gamba-react-ui-v2'
-import { useGamba } from 'gamba-react-v2'
 import React from 'react'
 import { useParams } from 'react-router-dom'
 import { Icon } from '../../components/Icon'
 import { Modal } from '../../components/Modal'
 import { GAMES } from '../../games'
+import { useUserStore } from '../../hooks/useUserStore'
 import { GameSlider } from '../Dashboard/Dashboard'
-import { Container, Controls, IconButton, LoadingIndicator, Screen, SettingControls, Splash } from './Game.styles'
+import { Container, Controls, IconButton, MetaControls, Screen, Splash } from './Game.styles'
+import { LoadingBar } from './LoadingBar'
 import { ProvablyFairModal } from './ProvablyFairModal'
+// import { TransactionModal } from './TransactionModal'
 
 function CustomError() {
   return (
@@ -28,48 +30,96 @@ function CustomError() {
  * Controls
  */
 function CustomRenderer() {
-  const gamba = useGamba()
   const { game } = GambaUi.useGame()
   const [info, setInfo] = React.useState(false)
   const [provablyFair, setProvablyFair] = React.useState(false)
+  // const [txModal, setTransactionModal] = React.useState(false)
   const audioStore = useGambaAudioStore()
+  const firstTimePlaying = useUserStore((state) => !state.gamesPlayed.includes(game.id))
+  const markGameAsPlayed = useUserStore((state) => () => state.markGameAsPlayed(game.id, true))
+  const [ready, setReady] = React.useState(false)
+  // const loading = useLoadingState()
+
+  React.useEffect(
+    () => {
+      const timeout = setTimeout(() => {
+        setReady(true)
+      }, 750)
+      return () => clearTimeout(timeout)
+    },
+    [],
+  )
+
+  React.useEffect(
+    () => {
+      const timeout = setTimeout(() => {
+        setInfo(firstTimePlaying)
+      }, 1000)
+      return () => clearTimeout(timeout)
+    },
+    [firstTimePlaying],
+  )
+
+  const closeInfo = () => {
+    markGameAsPlayed()
+    setInfo(false)
+  }
 
   return (
     <>
       {info && (
         <Modal onClose={() => setInfo(false)}>
-          <h1>{game.meta.name}</h1>
+          <h1>
+            <img height="100px" title={game.meta.name} src={game.meta.image} />
+          </h1>
           <p>{game.meta.description}</p>
+          <GambaUi.Button main onClick={closeInfo}>
+            Play
+          </GambaUi.Button>
         </Modal>
       )}
       {provablyFair && (
         <ProvablyFairModal onClose={() => setProvablyFair(false)} />
       )}
+      {/* {txModal && (
+        <TransactionModal onClose={() => setTransactionModal(false)} />
+      )} */}
       <Container>
-        <Splash>
-          <img height="150px" src={game.meta.image} />
-        </Splash>
         <Screen>
+          <Splash>
+            <img height="150px" src={game.meta.image} />
+          </Splash>
           <GambaUi.PortalTarget target="error" />
-          <GambaUi.PortalTarget target="screen" />
-          <SettingControls>
-            <button onClick={() => audioStore.set((audioStore.masterGain + .25) % 1.25)}>
-              Volume: {audioStore.masterGain * 100}%
-            </button>
-          </SettingControls>
-        </Screen>
-        <LoadingIndicator key={Number(gamba.isPlaying)} $active={gamba.isPlaying} />
-        <Controls>
-          <div style={{ display: 'flex' }}>
+          {ready && <GambaUi.PortalTarget target="screen" />}
+          <MetaControls>
             <IconButton onClick={() => setInfo(true)}>
               <Icon.Info />
             </IconButton>
             <IconButton onClick={() => setProvablyFair(true)}>
               <Icon.Fairness />
             </IconButton>
+            <IconButton onClick={() => audioStore.set(audioStore.masterGain ? 0 : .5)}>
+              {audioStore.masterGain ? '🔈' : '🔇'}
+            </IconButton>
+          </MetaControls>
+        </Screen>
+        <LoadingBar />
+        <Controls>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            {/* <div style={{ display: 'flex' }}>
+              <IconButton onClick={() => setTransactionModal(true)}>
+                {loading === -1 ? (
+                  <Icon.Shuffle />
+                ) : (
+                  <Spinner />
+                )}
+              </IconButton>
+            </div> */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <GambaUi.PortalTarget target="controls" />
+              <GambaUi.PortalTarget target="play" />
+            </div>
           </div>
-          <GambaUi.PortalTarget target="controls" />
-          <GambaUi.PortalTarget target="play" />
         </Controls>
       </Container>
     </>
