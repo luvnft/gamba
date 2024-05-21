@@ -154,7 +154,7 @@ function Inner() {
                 </Text>
                 <br />
                 <Text color="red" size="2">
-                  Please report any issues you find to us on <Link target="_blank" href="https://discord.gg/xjBsW3e8fK">Discord</Link>!
+                  Please report any issues you find to us on <Link target="_blank" href="https://discord.gg/d2s2EZYVdE">Discord</Link>!
                 </Text>
               </Box>
               {/* <Flex justify={"end"}>

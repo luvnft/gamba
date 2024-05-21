@@ -60,10 +60,7 @@ const Menu = () => {
           </NavigationMenu.Trigger>
           <NavigationMenu.Content className="NavigationMenuContent">
             <ul className="List">
-              <ListItemLink title="Github" href="https://github.com/gamba-labs">
-                👨‍💻 Build your own app using the Gamba SDKs and templates
-              </ListItemLink>
-              <ListItemLink title="Discord" href="https://discord.gg/xjBsW3e8fK">
+              <ListItemLink title="Discord" href="https://discord.gg/d2s2EZYVdE">
                 💬 Give feedback, ideas, and be the first to hear about new announcements.
               </ListItemLink>
               {/* <ListItemLink title="V1 Explorer" href="https://v1.gamba.so">
