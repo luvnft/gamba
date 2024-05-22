@@ -90,9 +90,23 @@ export default function RecentPlays() {
           </Recent>
         ),
       )}
-      <GambaUi.Button main onClick={() => window.open('https://explorer.gamba.so/platform/' + PLATFORM_CREATOR_ADDRESS + '?embed')}>
-        🚀 Explorer
-      </GambaUi.Button>
+      <a
+        href={`https://t.me/metavegas888`}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: 'inline-block',
+          padding: '10px 20px',
+          backgroundColor: '#007bff',
+          color: '#fff',
+          textDecoration: 'none',
+          borderRadius: '4px',
+          textAlign: 'center',
+          cursor: 'pointer'
+        }}
+      >
+        🚀 Metavegas888 Telegram
+      </a>
     </Container>
   )
 }

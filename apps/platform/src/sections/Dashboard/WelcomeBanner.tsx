@@ -109,13 +109,13 @@ export function WelcomeBanner() {
       </div>
       <Buttons>
         <button onClick={() => window.open('https://soleye.luvnft.com', '_blank')}>
-         🧿 $SOLEYE
+         🧿 Verify $SOL
         </button>
         <button onClick={() => window.open('https://linktr.ee/metavegas888', '_blank')}>
           🏁 Start
         </button>
         <button onClick={() => window.open('https://www.spatial.io/s/MetaVegas8-8-8-65a54d18e40487cbb55577ec?share=7289349129739015946', '_blank')}>
-          ✨ Events
+          ✨ Meta
         </button>
       </Buttons>
     </Welcome>

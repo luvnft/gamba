@@ -9,15 +9,14 @@ export const PLATFORM_SHARABLE_URL = 'https://metavegas.luvnft.com'
 // Gamba explorer URL - Appears in RecentPlays
 export const EXPLORER_URL = 'https://explorer.gamba.so/'
 
+export const RPC_ENDPOINT = 'https://api.mainnet-beta.solana.com';
+// Other exports
+
 // Creator fee (in %)
 export const PLATFORM_CREATOR_FEE = 0.05 // 1% (1/100 = 0.01)
 
 // Jackpot fee (in %)
 export const PLATFORM_JACKPOT_FEE = 0.001 // 0.1% (0.1/100 = 0.001)
-
-export const RPC_ENDPOINT = 'https://api.mainnet-beta.solana.com';
-// Other exports
-
 
 // Just a helper function
 const lp = (tokenMint: PublicKey | string, poolAuthority?: PublicKey | string): PoolToken => ({
