@@ -9,9 +9,6 @@ export const PLATFORM_SHARABLE_URL = 'https://metavegas.luvnft.com'
 // Gamba explorer URL - Appears in RecentPlays
 export const EXPLORER_URL = 'https://explorer.gamba.so/'
 
-// Platform URL - Appears in ShareModal
-export const PLATFORM_SHARABLE_URL = 'https://metavegas.luvnft.com'
-
 // Creator fee (in %)
 export const PLATFORM_CREATOR_FEE = 0.05 // 1% (1/100 = 0.01)
 
