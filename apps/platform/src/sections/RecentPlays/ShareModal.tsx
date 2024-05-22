@@ -59,15 +59,9 @@ export function ShareModal({ event, onClose }: {event: GambaTransaction<'GameSet
                 <img src={game?.meta?.image} width="100px" />
               </div>
             </div>
-<<<<<<< HEAD
             <div style={{ background: '#00000033', color: '#ffffff99', fontStyle: 'italic', display: 'flex', alignContent: 'center', gap: '10px', padding: '10px' }}>
               <img src="/metavegas.svg" height="20px" />
               <div>play on {PLATFORM_SHARABLE_URL}</div>
-=======
-            <div style={{ background: '#121217CC', color: '#ffffffcc', fontStyle: 'italic', display: 'flex', alignContent: 'center', gap: '10px', padding: '10px', borderRadius: '10px' }}>
-              <img src="/gamba.svg" height="25px" />
-              <div>play on <b>{PLATFORM_SHARABLE_URL}</b></div>
->>>>>>> 2283ad98b29cd1d341f9bddfcd313bee3d681001
             </div>
           </Content>
         </Inner>
