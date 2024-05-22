@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js'
 import { FAKE_TOKEN_MINT, PoolToken, TokenMeta, makeHeliusTokenFetcher } from 'gamba-react-ui-v2'
 
-export const PLATFORM_CREATOR_ADDRESS = '2qjX4as5UsfHkjpwuoVgUCtySTHtE5SBZEbNs1MrP4rR'
+export const PLATFORM_CREATOR_ADDRESS = 'AxsRW9x1RTmVQT7PgoG8b4fb3bu99zyAZbEtjtV2EsoS'
 
 /** Appears in ShareModal */
 export const PLATFORM_SHARABLE_URL = 'https://metavegas.luvnft.com'
@@ -10,7 +10,7 @@ export const PLATFORM_SHARABLE_URL = 'https://metavegas.luvnft.com'
 export const EXPLORER_URL = 'https://explorer.gamba.so/'
 
 // Platform URL - Appears in ShareModal
-export const PLATFORM_SHARABLE_URL = 'play.gamba.so'
+export const PLATFORM_SHARABLE_URL = 'https://metavegas.luvnft.com'
 
 // Creator fee (in %)
 export const PLATFORM_CREATOR_FEE = 0.05 // 1% (1/100 = 0.01)
