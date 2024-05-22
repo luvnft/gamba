@@ -104,7 +104,7 @@ export function WelcomeBanner() {
       <div>
         <h1>Welcome to MetaVegas</h1>
         <p>
-        A fair, simple and decentralized social charity casino on Solana. Create a <a href='https://phantom.app/'><b>Phantom</b></a> wallet account. Then buy <a href='https://crypto.link.com?ref=lb&destination_currency=sol&destination_network=solana'><b>$SOL</b></a> or <a href='https://crypto.link.com?ref=lb&destination_currency=usdc&destination_network=solana'><b>$USDC</b></a> to start.
+        A fair, simple and decentralized social charity casino on Solana. Create a <a href='https://phantom.app/'><b>Phantom</b></a> wallet account. Then buy <a href='https://crypto.link.com?ref=lb&destination_currency=sol&destination_network=solana'><b>$SOL</b></a> or <a href='https://crypto.link.com?ref=lb&destination_currency=usdc&destination_network=solana'><b>$USDC</b></a> to start. <a href='https://nftv.luvnft.com'><b>NFTV</b> Discord subscribers receive 50% of their monthly losses back in Bitcoin L$VE.
         </p>
       </div>
       <Buttons>
