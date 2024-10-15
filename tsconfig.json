@@ -3,12 +3,14 @@
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "node",
+    "baseUrl": "https://metavegas.live",  // Add this line
     "declaration": true,
     "strict": true,
     "jsx": "react-jsx",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "lib": ["DOM", "ESNext", "node"] // Ensure the libraries are included correctly
   },
   "include": [
     "packages/**/src/**/*",
@@ -16,3 +18,4 @@
   ],
   "exclude": ["node_modules", "dist"]
 }
+

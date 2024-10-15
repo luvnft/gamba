@@ -115,7 +115,7 @@ export function WelcomeBanner() {
   return (
     <Welcome>
       <div>
-        <h1>Welcome to Gamba v2 👋</h1>
+        <h1>Welcome to MetaVegas.live 👋</h1>
         <p>
           A fair, simple and decentralized casino on Solana.
         </p>
@@ -123,9 +123,6 @@ export function WelcomeBanner() {
       <Buttons>
         <button onClick={copyInvite}>
           💸 Copy Invite
-        </button>
-        <button onClick={() => window.open('https://soleye.luvnft.com', '_blank')}>
-          🧿 Verify $SOL
         </button>
         <button onClick={() => window.open('https://instagram.com/mvegaslive', '_blank')}>
           💬 Instagram
