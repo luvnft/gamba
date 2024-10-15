@@ -34,8 +34,8 @@ export function WelcomeBanner() {
       </div>
       <Buttons>
         <button onClick={() => window.open('https://soleye.luvnft.com', '_blank')}>🧿 Verify $SOL</button>
-        <button onClick={() => window.open('https://flip.metavegas.live', '_blank')}>🪙 Flip</button>
-        <button onClick={() => window.open('https://t.me/mvegaslive', '_blank')}>✨ Telegram</button>
+        <button onClick={() => window.open('https://instagram.com/mvegaslive', '_blank')}>🪙 Instagram</button>
+        <button onClick={() => window.open('https://twitter.com/mvegaslive', '_blank')}>✨ Twitter</button>
       </Buttons>
     </Welcome>
   )

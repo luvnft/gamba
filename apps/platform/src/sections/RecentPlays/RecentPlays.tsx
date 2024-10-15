@@ -91,7 +91,7 @@ export default function RecentPlays() {
         ),
       )}
       <a
-        href={`https://t.me/metavegaslive`}
+        href={`https://t.me/mvegaslive`}
         target="_blank"
         rel="noopener noreferrer"
         style={{
@@ -105,7 +105,7 @@ export default function RecentPlays() {
           cursor: 'pointer'
         }}
       >
-        🚀 Metavegas888 Telegram
+        🚀 Metavegas.live Telegram
       </a>
     </Container>
   )

@@ -3,9 +3,9 @@ import { DocsThemeConfig, useConfig } from 'nextra-theme-docs'
 import { useRouter } from 'next/router'
 
 const config: DocsThemeConfig = {
-  logo: (<><img src="/logo.svg" alt="Gamba Logo" /></>),
+  logo: (<><img src="/logo.svg" alt="Metavegas.live Logo" /></>),
   project: { link: 'https://github.com/gamba-labs' },
-  chat: { link: 'https://discord.gg/xjBsW3e8fK' },
+  chat: { link: 'https://t.me/mvegaslive' },
   docsRepositoryBase: 'https://github.com/gamba-labs/gamba/tree/docs/apps/website',
   nextThemes: {
     defaultTheme: 'dark',
@@ -17,15 +17,15 @@ const config: DocsThemeConfig = {
     const { asPath, pathname } = useRouter()
     const { frontMatter } = useConfig()
     const ogConfig = {
-      title: 'Gamba',
-      description: 'Build your own web3 games with Gamba, a decentralized betting platform on Solana',
-      author: { twitter: 'gambalabs' },
+      title: 'Metavegas.live',
+      description: 'Creator economy tribe owned casino on Solana blockchain with no middleman.',
+      author: { twitter: 'mvegaslive' },
       favicon: '/gamba.svg',
     }
     const favicon = String(ogConfig.favicon)
     const title = String(frontMatter.title || ogConfig.title)
     const description = String(frontMatter.description || ogConfig.description)
-    const canonical = new URL(asPath, 'https://gamba.so').toString()
+    const canonical = new URL(asPath, 'https://metavegas.live').toString()
     const image = 'https://www.gamba.so/og.png'
 
     return (
