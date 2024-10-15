@@ -1,8 +1,8 @@
 import { PublicKey } from '@solana/web3.js'
 import { NATIVE_MINT } from 'gamba-core-v2'
 import React from 'react'
-import { GameBundle } from '.'
 import { PortalProvider } from './PortalContext'
+import { ReferralProvider, ReferralProviderProps } from './referral/ReferralContext'
 
 interface PlatformMeta {
   name: string
@@ -30,20 +30,21 @@ export const GambaPlatformContext = React.createContext<GambaPlatformContext>(nu
 
 interface GambaPlatformProviderProps extends React.PropsWithChildren {
   creator: PublicKey | string
-  /** @deprecated */
-  games?: GameBundle[]
-  /** @deprecated */
-  tokens?: any[]
   defaultPool?: PoolToken
   /** How much the player should pay in fees to the platform */
   defaultCreatorFee?: number
   /** How much the player should pay in fees to play for the jackpot in every game. 0.001 = 0.1% */
   defaultJackpotFee?: number
-  /**  */
+  /** */
+  referral?: ReferralProviderProps
 }
 
 export function GambaPlatformProvider(props: GambaPlatformProviderProps) {
-  const { creator, children } = props
+  const {
+    creator,
+    children,
+    referral = { prefix: 'code', fee: 0.01, autoAccept: true },
+  } = props
   const [selectedPool, setSelectedPool] = React.useState<PoolToken>(props.defaultPool ?? { token: NATIVE_MINT })
   const [clientSeed, setClientSeed] = React.useState(String(Math.random() * 1e9 | 0))
   const [defaultJackpotFee, setDefaultJackpotFee] = React.useState(props.defaultJackpotFee ?? 0.001)
@@ -80,9 +81,11 @@ export function GambaPlatformProvider(props: GambaPlatformProviderProps) {
         defaultCreatorFee,
       }}
     >
-      <PortalProvider>
-        {children}
-      </PortalProvider>
+      <ReferralProvider {...referral}>
+        <PortalProvider>
+          {children}
+        </PortalProvider>
+      </ReferralProvider>
     </GambaPlatformContext.Provider>
   )
 }

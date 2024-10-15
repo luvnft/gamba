@@ -1,5 +1,8 @@
+import { useWallet } from '@solana/wallet-adapter-react'
+import { useWalletModal } from '@solana/wallet-adapter-react-ui'
 import React from 'react'
 import styled from 'styled-components'
+import { useUserStore } from '../../hooks/useUserStore'
 
 const Buttons = styled.div`
   overflow: hidden;
@@ -27,7 +30,7 @@ const Buttons = styled.div`
     border-radius: 10px;
     padding: 10px;
     background: #ffffffdf;
-    transition: background .2s ease;
+    transition: background-color .2s ease;
     color: black;
     cursor: pointer;
     &:hover {
@@ -99,6 +102,16 @@ const Welcome = styled.div`
 `
 
 export function WelcomeBanner() {
+  const wallet = useWallet()
+  const walletModal = useWalletModal()
+  const store = useUserStore()
+  const copyInvite = () => {
+    store.set({ userModal: true })
+    if (!wallet.connected) {
+      walletModal.setVisible(true)
+    }
+  }
+
   return (
     <Welcome>
       <div>
@@ -111,11 +124,11 @@ export function WelcomeBanner() {
         <button onClick={() => window.open('https://soleye.luvnft.com', '_blank')}>
          🧿 Verify $SOL
         </button>
-        <button onClick={() => window.open('https://linktr.ee/metavegas888', '_blank')}>
-          🏁 Start
+        <button onClick={() => window.open('https://flip.metavegas.live', '_blank')}>
+         🪙 Flip
         </button>
-        <button onClick={() => window.open('https://www.spatial.io/s/MetaVegas8-8-8-65a54d18e40487cbb55577ec?share=7289349129739015946', '_blank')}>
-          ✨ Meta
+        <button onClick={() => window.open('https://t.me/mvegaslive', '_blank')}>
+         ✨ Telegram
         </button>
       </Buttons>
     </Welcome>

@@ -13,7 +13,7 @@ export const throwTransactionError = (error: any) => {
   return error
 }
 
-export function useTransactionError(callback: (error: Error) => void) {
+export function useTransactionError(callback: (error: any) => void) {
   React.useLayoutEffect(
     () => transactionEventEmitter.subscribe(callback),
     [callback],
@@ -109,16 +109,27 @@ export function useSendTransaction() {
       )()
 
       // Create and sign the actual transaction
-      const transaction = await createTx(computeUnitLimit, (await connection.getLatestBlockhash()).blockhash)
+      const transaction = await createTx(computeUnitLimit, (await connection.getLatestBlockhash(context.blockhashCommitment)).blockhash)
+
+      const serialized = transaction.serialize()
+      // Adding a byte for the number of signatures, I think you should be able to get the total size with:
+      const size = serialized.length + 1 + (transaction.signatures.length * 64)
+
+      console.log('SIZE', size)
+
       const signedTransaction = await wallet.signTransaction(transaction)
 
       store.set({ state: 'sending' })
-      const txId = await connection.sendTransaction(signedTransaction, { skipPreflight: true })
+
+      const txId = await connection.sendTransaction(signedTransaction, {
+        skipPreflight: true,
+        preflightCommitment: context.blockhashCommitment,
+      })
 
       store.set({ state: 'processing', txId })
       console.debug('TX sent', txId)
 
-      const blockhash = await connection.getLatestBlockhash()
+      const blockhash = await connection.getLatestBlockhash(context.blockhashCommitment)
 
       const confirmStrategy: TransactionConfirmationStrategy = {
         blockhash: blockhash.blockhash,

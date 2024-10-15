@@ -1,7 +1,7 @@
 import { BPS_PER_WHOLE, GambaTransaction } from 'gamba-core-v2'
 import { GambaUi, TokenValue, useTokenMeta } from 'gamba-react-ui-v2'
 import React from 'react'
-import { PLATFORM_CREATOR_ADDRESS } from '../../constants'
+import { EXPLORER_URL, PLATFORM_CREATOR_ADDRESS } from '../../constants'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { extractMetadata } from '../../utils'
 import { Container, Jackpot, Profit, Recent, Skeleton } from './RecentPlays.styles'
@@ -91,7 +91,7 @@ export default function RecentPlays() {
         ),
       )}
       <a
-        href={`https://t.me/metavegas888`}
+        href={`https://t.me/metavegaslive`}
         target="_blank"
         rel="noopener noreferrer"
         style={{

@@ -1,13 +1,13 @@
 import { PublicKey } from '@solana/web3.js'
 import { FAKE_TOKEN_MINT, PoolToken, TokenMeta, makeHeliusTokenFetcher } from 'gamba-react-ui-v2'
 
-export const PLATFORM_CREATOR_ADDRESS = 'AxsRW9x1RTmVQT7PgoG8b4fb3bu99zyAZbEtjtV2EsoS'
+export const PLATFORM_CREATOR_ADDRESS = 'F5iFyvKbtXhX8BgHyC9tGAfgDKMagVBuygwsSTcUwQAh'
 
 /** Appears in ShareModal */
 export const PLATFORM_SHARABLE_URL = 'https://metavegas.live.com'
 
 // Gamba explorer URL - Appears in RecentPlays
-export const EXPLORER_URL = 'https://explorer.gamba.so/'
+export const EXPLORER_URL = 'https://explorer.gamba.so'
 
 export const RPC_ENDPOINT = 'https://api.mainnet-beta.solana.com';
 // Other exports
@@ -38,6 +38,7 @@ export const POOLS = [
   lp('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'),
   // Wormhole:
   lp('85VBFQZC9TZkfaptBWjvUw7YbZjy52A6mjtPGjstQAmQ'),
+  lp('H8cstTfTxPEm5qP3UXgga8Bdzm2MCDGAghJTgovPy6Y1', 'H83nsJJe11WY7TjhiVoDq5xmiYs7rU2iY4FweJuahVz2'),
 ]
 
 // The default token to be selected
@@ -67,6 +68,19 @@ export const TOKEN_METADATA: (Partial<TokenMeta> & {mint: PublicKey})[] = [
     usdPrice: 0,
   },
 ]
+
+/** HTML to display to user that they need to accept in order to continue */
+export const TOS_HTML = `
+  <p><b>1. Age Requirement:</b> Must be at least 18 years old.</p>
+  <p><b>2. Legal Compliance:</b> Follow local laws responsibly.</p>
+  <p><b>3. Risk Acknowledgement:</b> Games involve risk; no guaranteed winnings.</p>
+  <p><b>4. No Warranty:</b> Games provided "as is"; operate randomly.</p>
+  <p><b>5. Limitation of Liability:</b> We're not liable for damages.</p>
+  <p><b>6. Licensing Disclaimer:</b> Not a licensed casino; for simulation only.</p>
+  <p><b>7. Fair Play:</b> Games are conducted fairly and transparently.</p>
+  <p><b>8. Data Privacy:</b> Your privacy is important to us.</p>
+  <p><b>9. Responsible Gaming:</b> Play responsibly; seek help if needed.</p>
+`
 
 /**
  * A method for automatically fetching Token Metadata.

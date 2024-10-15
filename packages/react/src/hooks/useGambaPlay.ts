@@ -4,8 +4,8 @@ import { NATIVE_MINT, SYSTEM_PROGRAM, getPoolAddress } from 'gamba-core-v2'
 import React from 'react'
 import { useGambaProvider } from '.'
 import { GambaContext } from '../GambaProvider'
+import { GambaPluginContext, GambaPluginInput } from '../plugins'
 import { SendTransactionOptions, throwTransactionError, useSendTransaction } from './useSendTransaction'
-import { GambaPluginInput } from '../plugins'
 
 export interface GambaPlayInput {
   wager: number
@@ -28,8 +28,8 @@ export function useGambaPlay() {
 
   return async function play(
     input: GambaPlayInput,
-    instructions: TransactionInstruction[] = [],
-    opts?: SendTransactionOptions,
+    additionalInstructions: TransactionInstruction[] = [],
+    opts?: SendTransactionOptions & { lookupTables?: PublicKey[] },
   ) {
     const creator = new PublicKey(input.creator)
     const creatorFee = input.creatorFee ?? 0
@@ -37,6 +37,10 @@ export function useGambaPlay() {
     const meta = input.metadata?.join(':') ?? ''
     const token = new PublicKey(input.token ?? NATIVE_MINT)
     const poolAuthority = new PublicKey(input.poolAuthority ?? SYSTEM_PROGRAM)
+
+    if (!connected) {
+      throw throwTransactionError(new Error('NOT_CONNECTED'))
+    }
 
     const pluginInput: GambaPluginInput = {
       wallet: provider.user,
@@ -47,18 +51,24 @@ export function useGambaPlay() {
       input,
     }
 
-    const pluginInstructions = (await Promise.all(
-      context.plugins.map((x) => x(pluginInput, provider)),
-    )).flat()
+    const pluginContext: GambaPluginContext = {
+      creatorFee: creatorFee,
+      provider,
+    }
+    const pluginInstructions: TransactionInstruction[] = []
 
-    if (!connected) {
-      throw throwTransactionError(new Error('NOT_CONNECTED'))
+    for (const plugin of context.plugins) {
+      const resolved = await plugin(pluginInput, pluginContext)
+      if (resolved) {
+        pluginInstructions.push(...resolved)
+      }
     }
 
     const pool = getPoolAddress(token, poolAuthority)
 
     return sendTx(
       [
+        ...additionalInstructions, 
         provider.play(
           input.wager,
           input.bet,
@@ -66,15 +76,14 @@ export function useGambaPlay() {
           pool,
           token,
           creator,
-          creatorFee,
+          pluginContext.creatorFee,
           jackpotFee,
           meta,
           input.useBonus ?? false,
         ),
         ...pluginInstructions,
-        ...instructions,
       ],
-      { ...opts, label: 'play' },
+      { ...opts, label: 'play', lookupTable: opts?.lookupTables }
     )
   }
 }

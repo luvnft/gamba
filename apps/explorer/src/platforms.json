@@ -44,7 +44,7 @@
   {
     "address": "HNcGGH7y3QfQvjx4wrZ2MAGsrzBw6mUDciQGHVwMcLwN",
     "name": "Fronk Casino",
-    "url": "https://casino.fronk.xyz/",
+    "url": "https://fronk.casino",
     "image": "/logos/fronk.png"
   },
   {
@@ -120,5 +120,47 @@
     "name": "NEXTjs DEMO (Community Made)",
     "url": "https://play-gamba.vercel.app",
     "image": "/logos/gamba.png"
+  },
+  {
+    "address": "BgwxEtiXxodkZTawbsdM5VQY4tUHkVdSgWcvMEc2VZVV",
+    "name": "Fabled Fortune",
+    "url": "https://fabled-fortune.fabled-adventure.xyz",
+    "image": "/logos/fabledadventure.png"
+  },
+  {
+    "address": "EPmWNFaQWid6jfw6xqAmPVLFYtEcBrgFiaHNysGofrq9",
+    "name": "Geowmbles",
+    "url": "https://play.geowmbles.fun",
+    "image": "/logos/geowmbles.png"
+  },
+  {
+    "address": "oLZL97xByMZqvm1ZfWdYDg5g4Tu1Dt9ga5Juzj9eBDw",
+    "name": "CrocoShork",
+    "url": "https://www.croco-shork.fun/",
+    "image": "/logos/croco.png"
+  },
+  {
+    "address": "6ytMdqDQjmTuvTwjjiZZwzkZLMg2kyK8TVQtbTu1Qjvb",
+    "name": "Bet Your Memes",
+    "url": "https://betyourmemes.fun/",
+    "image": "/logos/betyourmemes.png"
+  },
+  {
+    "address": "49VmFApTZ9aRBGARH56vA7Mr32SwHi7XBCRvyKpbTZNG",
+    "name": "ShibaBets",
+    "url": "https://www.dogebets.casino/",
+    "image": "/logos/shibabets.png"
+  },
+  {
+    "address": "E46Q4mSsr1sYKtEeGnH4CxBkdbw9P6pW1ALRHxX2G8p2",
+    "name": "MobStars",
+    "url": "https://mobstars.casino/",
+    "image": "/logos/mobstarsrpg.png"
+  },
+  {
+    "address": "AjhV5Su8V5NLsnfqkYvUTGSRMPkj9pQ33HTohFAU8R43",
+    "name": "JMoney Gamefi",
+    "url": "https://j-money-gamefi.vercel.app/",
+    "image": "/logos/jmoney.png"
   }
 ]
