@@ -2,14 +2,15 @@ import { PublicKey } from '@solana/web3.js'
 import { FAKE_TOKEN_MINT, PoolToken, TokenMeta, makeHeliusTokenFetcher } from 'gamba-react-ui-v2'
 
 export const PLATFORM_CREATOR_ADDRESS = 'F5iFyvKbtXhX8BgHyC9tGAfgDKMagVBuygwsSTcUwQAh'
-
+export const PLATFORM_REFERRAL_FEE = 0.05 // Set this value as needed
+export const PLATFORM_ALLOW_REFERRER_REMOVAL = true // Set this value as needed
 /** Appears in ShareModal */
 export const PLATFORM_SHARABLE_URL = 'https://metavegas.live.com'
 
 // Gamba explorer URL - Appears in RecentPlays
 export const EXPLORER_URL = 'https://explorer.gamba.so'
 
-export const RPC_ENDPOINT = 'https://api.mainnet-beta.solana.com';
+export const RPC_ENDPOINT = 'https://api.mainnet-beta.solana.com'
 // Other exports
 
 // Creator fee (in %)
