@@ -1,6 +1,6 @@
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useWalletModal } from '@solana/wallet-adapter-react-ui'
-import React from 'react';
+import React from 'react'
 import styled from 'styled-components'
 import { useUserStore } from '../../hooks/useUserStore'
 
@@ -27,9 +27,9 @@ export function WelcomeBanner() {
   return (
     <Welcome>
       <div>
-        <h1>Welcome to MetaVegas.live</h1>
+        <h1>✨ Welcome to MetaVegas.live</h1>
         <p>
-          A fair, simple, and decentralized social charity casino on Solana. Create a <a href='https://phantom.app/'><b>Phantom</b></a> wallet account. Then buy <a href='https://crypto.link.com?ref=lb&destination_currency=sol&destination_network=solana'><b>$SOL</b></a> or <a href='https://crypto.link.com?ref=lb&destination_currency=usdc&destination_network=solana'><b>$USDC</b></a> to start.
+        A fair, simple, and decentralized social charity casino on Solana that gives back to players who go live. Create a <a href='https://phantom.app/'><b>Phantom</b></a> wallet account. Then buy <a href='https://crypto.link.com?ref=lb&destination_currency=sol&destination_network=solana'><b>$SOL</b></a> or <a href='https://crypto.link.com?ref=lb&destination_currency=usdc&destination_network=solana'><b>$USDC</b></a> to start.
         </p>
       </div>
       <Buttons>
